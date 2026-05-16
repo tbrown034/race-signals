@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "devlog": "node scripts/devlog.mjs",
+    "push:devlog": "node scripts/git-push-devlog.mjs"
   },
   "dependencies": {
     "next": "16.2.6",
