@@ -1,44 +1,5 @@
-const signals = [
-  {
-    district: "IN-01",
-    kind: "Large receipt",
-    title: "Mrvan committee reports a major individual contribution",
-    summary:
-      "A new itemized receipt crossed the first reporting threshold Race Signals watches for Indiana House races.",
-    amount: "$12,500",
-    source: "FEC Schedule A",
-    time: "Latest FEC pull",
-    severity: "Medium",
-  },
-  {
-    district: "IN-05",
-    kind: "New committee",
-    title: "New authorized committee appears in Indiana's 5th District",
-    summary:
-      "Committee formation can mark a challenger becoming operational before the race draws broader attention.",
-    amount: "New filing",
-    source: "FEC Form 1",
-    time: "Demo mode",
-    severity: "Low",
-  },
-  {
-    district: "IN-06",
-    kind: "Outside spending",
-    title: "Independent expenditure activity is ready for monitoring",
-    summary:
-      "Schedule E records will be separated from candidate committee spending so outside money is not buried in totals.",
-    amount: "Watch rule",
-    source: "FEC Schedule E",
-    time: "Rule staged",
-    severity: "High",
-  },
-];
-
-const watchlist = [
-  { district: "IN-01", rating: "Lean D", note: "Most competitive Indiana House rating in public forecaster data reviewed." },
-  { district: "IN-05", rating: "Watch", note: "Fundraising and committee movement can make this useful for early signals." },
-  { district: "IN-06", rating: "Solid R", note: "Still valuable for candidate lookup and primary money movement." },
-];
+import { getHomePageData } from "@/lib/db/queries";
+import type { SignalFeedItem } from "@/lib/demo/feed";
 
 function LogoMark() {
   return (
@@ -56,7 +17,7 @@ function LogoMark() {
   );
 }
 
-function SignalCard({ signal }: { signal: (typeof signals)[number] }) {
+function SignalCard({ signal }: { signal: SignalFeedItem }) {
   return (
     <article className="border border-stone-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
@@ -87,14 +48,16 @@ function SignalCard({ signal }: { signal: (typeof signals)[number] }) {
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-3 text-xs text-stone-500">
-        <span>Why it matters: early money movement can become a reporting lead.</span>
+        <span>Why it matters: {signal.whyItMatters}</span>
         <span className="font-medium text-stone-700">{signal.source}</span>
       </div>
     </article>
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const { signals, raceContext, freshnessLabel, dataMode } = await getHomePageData();
+
   return (
     <main className="min-h-screen bg-[#f6f4ef] text-stone-950">
       <header className="border-b border-stone-300 bg-[#fbfaf7]/95">
@@ -159,7 +122,9 @@ export default function Home() {
                 <div className="text-sm font-semibold">Signal feed</div>
                 <div className="text-xs text-stone-300">Latest available from source data</div>
               </div>
-              <div className="font-mono text-xs text-stone-300">Demo / pending DB</div>
+              <div className="font-mono text-xs text-stone-300">
+                {dataMode === "database" ? freshnessLabel : "Demo / pending live ingest"}
+              </div>
             </div>
             {signals.map((signal) => (
               <SignalCard key={signal.title} signal={signal} />
@@ -175,7 +140,7 @@ export default function Home() {
             <span className="font-mono text-xs text-stone-500">Manual + forecaster context</span>
           </div>
           <div className="divide-y divide-stone-200">
-            {watchlist.map((race) => (
+            {raceContext.map((race) => (
               <div key={race.district} className="grid gap-2 py-4 md:grid-cols-[90px_90px_1fr]">
                 <div className="font-mono text-sm font-semibold">{race.district}</div>
                 <div className="text-sm font-medium text-stone-700">{race.rating}</div>

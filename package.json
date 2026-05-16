@@ -7,12 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "db:schema": "node scripts/apply-schema.mjs",
+    "db:seed": "node scripts/seed-demo.mjs",
+    "db:setup": "pnpm db:schema && pnpm db:seed",
     "devlog": "node scripts/devlog.mjs",
     "devlog:install-hook": "node scripts/install-devlog-hook.mjs",
     "push:devlog": "node scripts/git-push-devlog.mjs"
   },
   "dependencies": {
     "next": "16.2.6",
+    "postgres": "^3.4.9",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
