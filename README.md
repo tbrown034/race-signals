@@ -30,19 +30,15 @@ Existing app files:
 - `eslint.config.mjs`
 - `postcss.config.mjs`
 
-Planning and reference files added for the MVP:
+Public project files added for the MVP:
 
-- `docs/north-star.md`
-- `docs/implementation-plan.md`
-- `docs/portfolio-positioning.md`
-- `docs/fec-api-notes.md`
-- `docs/data-dictionary.md`
-- `docs/methodology.md`
-- `docs/repo-inventory.md`
 - `data/reference/fec-endpoints.json`
 - `data/reference/watchlist-races.json`
 - `data/reference/demo-candidates.json`
 - `data/reference/demo-committees.json`
+- `lib/db/schema.sql`
+
+Local planning and agent notes live in `docs/`, `AGENTS.md` and `CLAUDE.md`. Those files are intentionally gitignored.
 
 ## Data Source
 
@@ -157,7 +153,7 @@ The initial Postgres model should include:
 
 Use FEC IDs and endpoint-specific stable IDs as unique keys. Upserts are required.
 
-See `docs/data-dictionary.md` for the working schema notes.
+See `lib/db/schema.sql` for the current schema contract.
 
 ## Signal Rules
 
