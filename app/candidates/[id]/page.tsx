@@ -149,7 +149,10 @@ function SignalRow({
     kind: string;
     title: string;
     summary: string;
+    whyItMatters: string;
     time: string;
+    severity: string;
+    amount: string | null;
     sourceUrl: string | null;
   };
 }) {
@@ -159,9 +162,14 @@ function SignalRow({
         <span className="font-mono">{signal.time}</span>
         <span>{signal.raceLabel}</span>
         <span>{signal.kind}</span>
+        <span>{signal.severity}</span>
+        {signal.amount ? <span>{signal.amount}</span> : null}
       </div>
       <h3 className="font-semibold">{signal.title}</h3>
       <p className="mt-1 text-sm leading-6 text-stone-600">{signal.summary}</p>
+      <p className="mt-2 text-sm leading-6 text-stone-600">
+        Why it matters: {signal.whyItMatters}
+      </p>
       {signal.sourceUrl ? (
         <a className="mt-2 inline-block text-sm underline underline-offset-4" href={signal.sourceUrl}>
           Source record

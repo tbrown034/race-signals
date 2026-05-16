@@ -50,23 +50,44 @@ function SignalCard({ signal }: { signal: SignalFeedItem }) {
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-3 text-xs text-stone-500">
         <span>Why it matters: {signal.whyItMatters}</span>
-        {signal.sourceUrl ? (
-          <a
-            className="font-medium text-stone-800 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-800"
-            href={signal.sourceUrl}
-          >
-            {signal.source}
-          </a>
-        ) : (
-          <span className="font-medium text-stone-700">{signal.source}</span>
-        )}
+        <span className="flex flex-wrap gap-3">
+          {signal.candidateHref ? (
+            <Link className="font-medium text-stone-800 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-800" href={signal.candidateHref}>
+              Candidate
+            </Link>
+          ) : null}
+          {signal.committeeHref ? (
+            <Link className="font-medium text-stone-800 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-800" href={signal.committeeHref}>
+              Committee
+            </Link>
+          ) : null}
+          {signal.sourceUrl ? (
+            <a
+              className="font-medium text-stone-800 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-800"
+              href={signal.sourceUrl}
+            >
+              {signal.source}
+            </a>
+          ) : (
+            <span className="font-medium text-stone-700">{signal.source}</span>
+          )}
+        </span>
       </div>
     </article>
   );
 }
 
-export default async function Home() {
-  const { signals, raceContext, freshnessLabel, dataMode, stats } = await getHomePageData();
+type HomeProps = {
+  searchParams?: Promise<{ state?: string; office?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const params = await searchParams;
+  const { signals, raceContext, freshnessLabel, dataMode, stats, filters, filterOptions } =
+    await getHomePageData({
+      state: params?.state,
+      office: params?.office,
+    });
 
   return (
     <main className="min-h-screen bg-[#f6f4ef] text-stone-950">
@@ -139,9 +160,50 @@ export default async function Home() {
                 {dataMode === "database" ? freshnessLabel : "Demo / pending live ingest"}
               </div>
             </div>
-            {signals.map((signal) => (
-              <SignalCard key={signal.title} signal={signal} />
-            ))}
+            <form className="grid gap-2 border border-stone-300 bg-white p-3 md:grid-cols-[1fr_1fr_auto_auto]" action="/">
+              <select
+                aria-label="Filter by state"
+                className="border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800"
+                defaultValue={filters.state}
+                name="state"
+              >
+                <option value="">All states</option>
+                {filterOptions.states.map((state) => (
+                  <option key={state.value} value={state.value}>
+                    {state.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Filter by office"
+                className="border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800"
+                defaultValue={filters.office}
+                name="office"
+              >
+                <option value="">House and Senate</option>
+                {filterOptions.offices.map((office) => (
+                  <option key={office.value} value={office.value}>
+                    {office.label}
+                  </option>
+                ))}
+              </select>
+              <button className="border border-stone-950 bg-stone-950 px-4 py-2 text-sm font-semibold text-white">
+                Apply
+              </button>
+              <Link className="border border-stone-300 px-4 py-2 text-center text-sm font-medium text-stone-700" href="/">
+                Reset
+              </Link>
+            </form>
+            {signals.length ? (
+              signals.map((signal) => (
+                <SignalCard key={signal.title} signal={signal} />
+              ))
+            ) : (
+              <div className="border border-stone-300 bg-white p-5 text-sm leading-6 text-stone-600">
+                No signals match this filter yet. Broaden the state or office filter,
+                or run a wider FEC ingest for this slice.
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -67,6 +67,8 @@ Included in the first serious slice:
 - Itemized disbursements
 - Independent expenditures by candidate
 - Deterministic signal generation
+- State and office filters on the signal feed
+- Basic candidate and committee search
 - Demo mode when no `FEC_API_KEY` is available
 
 ## Portfolio Purpose
@@ -208,7 +210,10 @@ pnpm ingest:fec -- --scope indiana-house --candidate-limit 40 --detail-limit 12 
 # One state, both chambers
 pnpm ingest:fec -- --scope congress --state IN --candidate-limit 120 --detail-limit 30 --transaction-limit 120
 
-# National bounded run
+# Multi-state watch slice, both chambers
+pnpm ingest:fec -- --scope congress --states IN,MI,WI,PA,AZ,GA,NC,NV --candidate-limit 160 --detail-limit 24 --transaction-limit 80
+
+# National bounded run. Keep this intentionally capped until scheduling and queues exist.
 pnpm ingest:fec -- --scope congress --candidate-limit 250 --detail-limit 40 --transaction-limit 150
 ```
 
@@ -216,7 +221,8 @@ Arguments:
 
 - `--cycle`: election cycle, default `2026`
 - `--scope`: `indiana-house`, `house`, `senate` or `congress`
-- `--state`: optional state filter for `house`, `senate` and `congress`
+- `--state`: optional single-state filter for `house`, `senate` and `congress`
+- `--states`: optional comma-list state filter, such as `IN,MI,WI`
 - `--candidate-limit`: caps candidate search processing
 - `--detail-limit`: caps expensive per-candidate detail pulls
 - `--transaction-limit`: caps Schedule A, B and E rows per detail entity

@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import {
   demoRaceContext,
   demoSignals,
+  type HomeFilterOption,
   type HomeStats,
   type RaceContextItem,
   type SignalFeedItem,
@@ -21,6 +22,8 @@ type SignalRow = {
   why_it_matters: string;
   source_url: string | null;
   amount: string | null;
+  candidate_id: string | null;
+  committee_id: string | null;
 };
 
 type RaceRow = {
@@ -191,10 +194,21 @@ export type HomePageData = {
   freshnessLabel: string;
   dataMode: "database" | "demo";
   stats: HomeStats;
+  filters: {
+    state: string;
+    office: string;
+  };
+  filterOptions: {
+    states: HomeFilterOption[];
+    offices: HomeFilterOption[];
+  };
 };
 
-export async function getHomePageData(): Promise<HomePageData> {
+export async function getHomePageData(filters: { state?: string; office?: string } = {}): Promise<HomePageData> {
   noStore();
+
+  const normalizedFilters = normalizeHomeFilters(filters);
+  const emptyFilterOptions = { states: [], offices: officeOptions };
 
   if (!hasDatabaseUrl()) {
     return {
@@ -203,11 +217,16 @@ export async function getHomePageData(): Promise<HomePageData> {
       freshnessLabel: "Demo mode",
       dataMode: "demo",
       stats: { races: 9, candidates: demoSignals.length, signals: demoSignals.length },
+      filters: normalizedFilters,
+      filterOptions: emptyFilterOptions,
     };
   }
 
   try {
     const sql = getSql();
+    const filterState = normalizedFilters.state || null;
+    const filterOffice = normalizedFilters.office || null;
+
     const signalRows = await sql<SignalRow[]>`
       select
         signals.id,
@@ -221,10 +240,14 @@ export async function getHomePageData(): Promise<HomePageData> {
         signals.summary,
         signals.why_it_matters,
         signals.source_url,
-        transactions.amount::text as amount
+        transactions.amount::text as amount,
+        signals.candidate_id::text,
+        signals.committee_id::text
       from signals
       left join races on races.id = signals.race_id
       left join transactions on transactions.id = signals.transaction_id
+      where (${filterState}::text is null or races.state = ${filterState})
+        and (${filterOffice}::text is null or races.office = ${filterOffice})
       order by signals.event_date desc, signals.created_at desc
       limit 12
     `;
@@ -241,6 +264,8 @@ export async function getHomePageData(): Promise<HomePageData> {
         end as rating
       from races
       where cycle = 2026
+        and (${filterState}::text is null or state = ${filterState})
+        and (${filterOffice}::text is null or office = ${filterOffice})
       order by is_watchlist desc, state asc, office asc, district asc nulls first
       limit 12
     `;
@@ -255,9 +280,23 @@ export async function getHomePageData(): Promise<HomePageData> {
 
     const statsRows = await sql<HomeStats[]>`
       select
-        (select count(*)::int from races where cycle = 2026) as races,
-        (select count(*)::int from candidates where cycle = 2026) as candidates,
-        (select count(*)::int from signals) as signals
+        (select count(*)::int from races where cycle = 2026
+          and (${filterState}::text is null or state = ${filterState})
+          and (${filterOffice}::text is null or office = ${filterOffice})) as races,
+        (select count(*)::int from candidates where cycle = 2026
+          and (${filterState}::text is null or state = ${filterState})
+          and (${filterOffice}::text is null or office = ${filterOffice})) as candidates,
+        (select count(*)::int from signals
+          left join races on races.id = signals.race_id
+          where (${filterState}::text is null or races.state = ${filterState})
+            and (${filterOffice}::text is null or races.office = ${filterOffice})) as signals
+    `;
+
+    const stateRows = await sql<{ state: string }[]>`
+      select distinct state
+      from races
+      where cycle = 2026 and state is not null
+      order by state asc
     `;
 
     return {
@@ -272,10 +311,14 @@ export async function getHomePageData(): Promise<HomePageData> {
               amount: signal.amount ? formatMoney(signal.amount) : "Record",
               source: signal.source_url ? "FEC source" : "Source pending",
               sourceUrl: signal.source_url,
+              candidateHref: signal.candidate_id ? `/candidates/${signal.candidate_id}` : null,
+              committeeHref: signal.committee_id ? `/committees/${signal.committee_id}` : null,
               time: formatSignalTime(signal.event_date),
               severity: normalizeSeverity(signal.severity),
             }))
-          : demoSignals,
+          : hasActiveHomeFilters(normalizedFilters)
+            ? []
+            : demoSignals,
       raceContext:
         raceRows.length > 0
           ? raceRows.map((race) => ({
@@ -287,8 +330,13 @@ export async function getHomePageData(): Promise<HomePageData> {
       freshnessLabel: freshnessRows[0]?.finished_at
         ? `Updated ${formatSignalTime(freshnessRows[0].finished_at)}`
         : "Database connected / demo signals",
-      dataMode: signalRows.length > 0 ? "database" : "demo",
+      dataMode: signalRows.length > 0 || hasActiveHomeFilters(normalizedFilters) ? "database" : "demo",
       stats: statsRows[0] ?? { races: 0, candidates: 0, signals: signalRows.length },
+      filters: normalizedFilters,
+      filterOptions: {
+        states: stateRows.map((row) => ({ value: row.state, label: row.state })),
+        offices: officeOptions,
+      },
     };
   } catch (error) {
     console.error("Falling back to demo homepage data:", error);
@@ -299,8 +347,29 @@ export async function getHomePageData(): Promise<HomePageData> {
       freshnessLabel: "Demo fallback",
       dataMode: "demo",
       stats: { races: 9, candidates: demoSignals.length, signals: demoSignals.length },
+      filters: normalizedFilters,
+      filterOptions: emptyFilterOptions,
     };
   }
+}
+
+const officeOptions = [
+  { value: "H", label: "House" },
+  { value: "S", label: "Senate" },
+];
+
+function normalizeHomeFilters(filters: { state?: string; office?: string }) {
+  const state = String(filters.state ?? "").trim().toUpperCase();
+  const office = String(filters.office ?? "").trim().toUpperCase();
+
+  return {
+    state: /^[A-Z]{2}$/.test(state) ? state : "",
+    office: office === "H" || office === "S" ? office : "",
+  };
+}
+
+function hasActiveHomeFilters(filters: { state: string; office: string }) {
+  return Boolean(filters.state || filters.office);
 }
 
 export async function searchRaceSignals(query: string) {
@@ -401,7 +470,7 @@ export async function getCandidateProfile(id: string) {
     left join candidate_media on candidate_media.candidate_id = candidates.id
       and candidate_media.media_kind = 'photo'
       and candidate_media.is_primary
-    where candidates.id = ${id}
+    where candidates.id::text = ${id}
        or candidates.fec_candidate_id = ${id}
     order by candidates.cycle desc
     limit 1
@@ -507,7 +576,7 @@ export async function getCommitteeProfile(id: string) {
     from committees
     left join committee_totals on committee_totals.committee_id = committees.id
       and committee_totals.cycle = 2026
-    where committees.id = ${id}
+    where committees.id::text = ${id}
        or committees.fec_committee_id = ${id}
     limit 1
   `;

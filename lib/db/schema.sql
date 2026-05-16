@@ -46,6 +46,11 @@ create table if not exists races (
   unique (cycle, office, state, district)
 );
 
+update races
+set district = '00'
+where office = 'S'
+  and district is null;
+
 create table if not exists candidates (
   id uuid primary key default gen_random_uuid(),
   fec_candidate_id text not null,

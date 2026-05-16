@@ -7,6 +7,8 @@ export type SignalFeedItem = {
   amount: string;
   source: string;
   sourceUrl?: string | null;
+  candidateHref?: string | null;
+  committeeHref?: string | null;
   time: string;
   severity: "Low" | "Medium" | "High";
 };
@@ -21,6 +23,11 @@ export type HomeStats = {
   races: number;
   candidates: number;
   signals: number;
+};
+
+export type HomeFilterOption = {
+  value: string;
+  label: string;
 };
 
 export const demoSignals: SignalFeedItem[] = [

@@ -12,7 +12,8 @@ loadLocalEnv(root);
 const args = parseArgs(process.argv.slice(2));
 const cycle = Number(args.cycle ?? 2026);
 const scope = String(args.scope ?? "indiana-house");
-const state = args.state ? String(args.state).toUpperCase() : undefined;
+const states = parseStates(args.states ?? args.state);
+const state = states.length === 1 ? states[0] : undefined;
 const candidateLimit = Number(args["candidate-limit"] ?? (scope === "congress" ? 250 : 120));
 const detailLimit = Number(args["detail-limit"] ?? 30);
 const transactionLimit = Number(args["transaction-limit"] ?? 150);
@@ -59,7 +60,7 @@ async function ingest() {
     insert into ingestion_runs (source_id, scope, status)
     values (
       ${source.id},
-      ${sql.json({ source: "fec", scope, state, cycle, candidateLimit, detailLimit, transactionLimit })},
+      ${sql.json({ source: "fec", scope, state, states, cycle, candidateLimit, detailLimit, transactionLimit })},
       'running'
     )
     returning id
@@ -70,7 +71,10 @@ async function ingest() {
     const candidateParamsList = getCandidateParamSets();
     const candidates = [];
 
-    for (const params of candidateParamsList) {
+    for (const [index, params] of candidateParamsList.entries()) {
+      const paramLimit = candidateLimitForParamSet(index, candidateParamsList.length);
+      let paramCount = 0;
+
       for await (const page of fec.candidateSearch(params)) {
         for (const candidate of page.results) {
           if (candidate.election_years?.length && !candidate.election_years.includes(cycle)) {
@@ -78,13 +82,14 @@ async function ingest() {
           }
 
           candidates.push(candidate);
+          paramCount += 1;
 
-          if (candidates.length >= candidateLimit) {
+          if (paramCount >= paramLimit) {
             break;
           }
         }
 
-        if (candidates.length >= candidateLimit) {
+        if (paramCount >= paramLimit) {
           break;
         }
       }
@@ -102,7 +107,7 @@ async function ingest() {
         endpoint: "/v1/candidates/search/",
         sourceRecordId: `${candidate.candidate_id}:${cycle}`,
         sourceUrl: candidateUrl(candidate.candidate_id),
-        requestParams: { scope, cycle },
+        requestParams: { scope, states, cycle },
         rawJson: candidate,
       });
 
@@ -300,7 +305,6 @@ async function ingestCommitteeTransactions(sourceId, committee, committeeId, can
       }
     }
     if (seenReceipts >= transactionLimit) break;
-    break;
   }
 
   let seenDisbursements = 0;
@@ -339,7 +343,6 @@ async function ingestCommitteeTransactions(sourceId, committee, committeeId, can
       }
     }
     if (seenDisbursements >= transactionLimit) break;
-    break;
   }
 }
 
@@ -404,7 +407,6 @@ async function ingestIndependentExpenditures({ sourceId, candidate, candidateId,
       });
     }
     if (seen >= transactionLimit) break;
-    break;
   }
 }
 
@@ -419,26 +421,34 @@ function getCandidateParamSets() {
     return [{ ...common, office: "H", state: "IN" }];
   }
 
+  const stateFilters = states.length > 0 ? states : [null];
+
   if (scope === "house") {
-    return [{ ...common, office: "H", ...(state ? { state } : {}) }];
+    return stateFilters.map((stateFilter) => ({ ...common, office: "H", ...(stateFilter ? { state: stateFilter } : {}) }));
   }
 
   if (scope === "senate") {
-    return [{ ...common, office: "S", ...(state ? { state } : {}) }];
+    return stateFilters.map((stateFilter) => ({ ...common, office: "S", ...(stateFilter ? { state: stateFilter } : {}) }));
   }
 
   if (scope === "congress") {
-    return [
-      { ...common, office: "H", ...(state ? { state } : {}) },
-      { ...common, office: "S", ...(state ? { state } : {}) },
-    ];
+    return stateFilters.flatMap((stateFilter) => [
+      { ...common, office: "H", ...(stateFilter ? { state: stateFilter } : {}) },
+      { ...common, office: "S", ...(stateFilter ? { state: stateFilter } : {}) },
+    ]);
   }
 
   throw new Error(`Unsupported scope: ${scope}`);
 }
 
+function candidateLimitForParamSet(index, paramSetCount) {
+  const baseLimit = Math.floor(candidateLimit / paramSetCount);
+  const remainder = candidateLimit % paramSetCount;
+  return Math.max(1, baseLimit + (index < remainder ? 1 : 0));
+}
+
 async function upsertRace(candidate) {
-  const district = candidate.office === "S" ? null : normalizeDistrict(candidate.district);
+  const district = candidate.office === "S" ? "00" : normalizeDistrict(candidate.district);
   const label =
     candidate.office === "S"
       ? `${candidate.state} Senate`
@@ -913,11 +923,35 @@ function parseArgs(argv) {
   const parsed = {};
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg === "--") continue;
     if (!arg.startsWith("--")) continue;
     const [key, inlineValue] = arg.slice(2).split("=");
     parsed[key] = inlineValue ?? argv[index + 1] ?? true;
     if (inlineValue === undefined) index += 1;
   }
+  return parsed;
+}
+
+function parseStates(value) {
+  if (!value) return [];
+
+  const seen = new Set();
+  const parsed = String(value)
+    .split(",")
+    .map((entry) => entry.trim().toUpperCase())
+    .filter(Boolean)
+    .filter((entry) => {
+      if (seen.has(entry)) return false;
+      seen.add(entry);
+      return true;
+    });
+
+  for (const entry of parsed) {
+    if (!/^[A-Z]{2}$/.test(entry)) {
+      throw new Error(`Invalid state code in --states: ${entry}`);
+    }
+  }
+
   return parsed;
 }
 
