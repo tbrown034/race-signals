@@ -49,6 +49,7 @@ create table if not exists races (
 create table if not exists candidates (
   id uuid primary key default gen_random_uuid(),
   fec_candidate_id text not null,
+  bioguide_id text,
   name text not null,
   party text,
   party_full text,
@@ -64,6 +65,9 @@ create table if not exists candidates (
   updated_at timestamptz not null default now(),
   unique (fec_candidate_id, cycle)
 );
+
+alter table candidates
+  add column if not exists bioguide_id text;
 
 create table if not exists committees (
   id uuid primary key default gen_random_uuid(),
@@ -94,6 +98,69 @@ create table if not exists candidate_committees (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (candidate_id, committee_id, cycle, relationship)
+);
+
+create table if not exists candidate_totals (
+  id uuid primary key default gen_random_uuid(),
+  candidate_id uuid not null references candidates(id) on delete cascade,
+  cycle integer not null,
+  receipts numeric(14, 2),
+  disbursements numeric(14, 2),
+  cash_on_hand numeric(14, 2),
+  debts_owed_by_committee numeric(14, 2),
+  individual_contributions numeric(14, 2),
+  political_party_committee_contributions numeric(14, 2),
+  other_political_committee_contributions numeric(14, 2),
+  candidate_contribution numeric(14, 2),
+  source_document_id uuid references source_documents(id) on delete set null,
+  updated_at timestamptz not null default now(),
+  unique (candidate_id, cycle)
+);
+
+create table if not exists committee_totals (
+  id uuid primary key default gen_random_uuid(),
+  committee_id uuid not null references committees(id) on delete cascade,
+  cycle integer not null,
+  receipts numeric(14, 2),
+  disbursements numeric(14, 2),
+  cash_on_hand numeric(14, 2),
+  debts_owed_by_committee numeric(14, 2),
+  individual_contributions numeric(14, 2),
+  transfers_from_other_authorized_committee numeric(14, 2),
+  transfers_to_other_authorized_committee numeric(14, 2),
+  source_document_id uuid references source_documents(id) on delete set null,
+  updated_at timestamptz not null default now(),
+  unique (committee_id, cycle)
+);
+
+create table if not exists candidate_media (
+  id uuid primary key default gen_random_uuid(),
+  candidate_id uuid not null references candidates(id) on delete cascade,
+  media_kind text not null check (media_kind in ('photo', 'avatar', 'logo')),
+  source_name text not null,
+  source_url text,
+  image_url text,
+  license_note text,
+  is_primary boolean not null default false,
+  verified_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  unique (candidate_id, media_kind, source_name, source_url)
+);
+
+create table if not exists race_ratings (
+  id uuid primary key default gen_random_uuid(),
+  race_id uuid not null references races(id) on delete cascade,
+  source_name text not null,
+  rating text not null,
+  rating_normalized text not null,
+  context_label text not null default 'manual_watchlist',
+  incumbent_party text,
+  incumbent_name text,
+  source_url text,
+  published_at date,
+  fetched_at timestamptz not null default now(),
+  notes text,
+  unique (race_id, source_name, rating, fetched_at)
 );
 
 create table if not exists filings (
@@ -174,6 +241,9 @@ create index if not exists idx_races_scope
 create index if not exists idx_candidates_scope
   on candidates (cycle, office, state, district);
 
+create index if not exists idx_candidates_fec_candidate_id
+  on candidates (fec_candidate_id);
+
 create index if not exists idx_committees_name
   on committees using gin (to_tsvector('english', name));
 
@@ -191,6 +261,12 @@ create index if not exists idx_transactions_amount
 
 create index if not exists idx_signals_feed
   on signals (event_date desc, created_at desc);
+
+create index if not exists idx_candidate_totals_cycle
+  on candidate_totals (cycle);
+
+create index if not exists idx_committee_totals_cycle
+  on committee_totals (cycle);
 
 insert into sources (slug, name, base_url)
 values ('fec', 'Federal Election Commission', 'https://api.open.fec.gov')

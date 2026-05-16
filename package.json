@@ -10,6 +10,8 @@
     "db:schema": "node scripts/apply-schema.mjs",
     "db:seed": "node scripts/seed-demo.mjs",
     "db:setup": "pnpm db:schema && pnpm db:seed",
+    "ingest:fec": "node scripts/ingest-fec.mjs",
+    "ingest:fec:in": "node scripts/ingest-fec.mjs --scope indiana-house --candidate-limit 80 --detail-limit 20 --transaction-limit 120",
     "devlog": "node scripts/devlog.mjs",
     "devlog:install-hook": "node scripts/install-devlog-hook.mjs",
     "push:devlog": "node scripts/git-push-devlog.mjs"

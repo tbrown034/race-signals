@@ -6,6 +6,7 @@ export type SignalFeedItem = {
   whyItMatters: string;
   amount: string;
   source: string;
+  sourceUrl?: string | null;
   time: string;
   severity: "Low" | "Medium" | "High";
 };
@@ -14,6 +15,12 @@ export type RaceContextItem = {
   district: string;
   rating: string;
   note: string;
+};
+
+export type HomeStats = {
+  races: number;
+  candidates: number;
+  signals: number;
 };
 
 export const demoSignals: SignalFeedItem[] = [
@@ -27,6 +34,7 @@ export const demoSignals: SignalFeedItem[] = [
       "Early itemized money can show which campaigns are gaining donor attention before the next quarterly story cycle.",
     amount: "$12,500",
     source: "FEC Schedule A",
+    sourceUrl: "https://www.fec.gov/data/receipts/",
     time: "Demo mode",
     severity: "Medium",
   },
@@ -40,6 +48,7 @@ export const demoSignals: SignalFeedItem[] = [
       "New committee paperwork is often the first structured record that a campaign is moving from talk to operations.",
     amount: "New filing",
     source: "FEC Form 1",
+    sourceUrl: "https://www.fec.gov/data/committees/",
     time: "Demo mode",
     severity: "Low",
   },
@@ -53,6 +62,7 @@ export const demoSignals: SignalFeedItem[] = [
       "Outside spending can change the story of a race even when candidate committee totals look quiet.",
     amount: "Watch rule",
     source: "FEC Schedule E",
+    sourceUrl: "https://www.fec.gov/data/independent-expenditures/",
     time: "Rule staged",
     severity: "High",
   },

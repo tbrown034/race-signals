@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getHomePageData } from "@/lib/db/queries";
 import type { SignalFeedItem } from "@/lib/demo/feed";
 
@@ -9,7 +10,7 @@ function LogoMark() {
       </div>
       <div>
         <div className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-950">
-          Race Signals
+          <Link href="/">Race Signals</Link>
         </div>
         <div className="text-xs text-stone-500">Campaign finance intelligence</div>
       </div>
@@ -49,14 +50,23 @@ function SignalCard({ signal }: { signal: SignalFeedItem }) {
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-3 text-xs text-stone-500">
         <span>Why it matters: {signal.whyItMatters}</span>
-        <span className="font-medium text-stone-700">{signal.source}</span>
+        {signal.sourceUrl ? (
+          <a
+            className="font-medium text-stone-800 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-800"
+            href={signal.sourceUrl}
+          >
+            {signal.source}
+          </a>
+        ) : (
+          <span className="font-medium text-stone-700">{signal.source}</span>
+        )}
       </div>
     </article>
   );
 }
 
 export default async function Home() {
-  const { signals, raceContext, freshnessLabel, dataMode } = await getHomePageData();
+  const { signals, raceContext, freshnessLabel, dataMode, stats } = await getHomePageData();
 
   return (
     <main className="min-h-screen bg-[#f6f4ef] text-stone-950">
@@ -70,9 +80,12 @@ export default async function Home() {
             <a className="hover:text-stone-950" href="#watchlist">
               Watchlist
             </a>
-            <a className="hover:text-stone-950" href="#methodology">
+            <Link className="hover:text-stone-950" href="/search">
+              Search
+            </Link>
+            <Link className="hover:text-stone-950" href="/methodology">
               Methodology
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
@@ -82,7 +95,7 @@ export default async function Home() {
           <div className="flex flex-col justify-between gap-8">
             <div>
               <div className="mb-5 inline-flex border border-stone-300 bg-white px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-stone-600">
-                FEC only / Indiana House / 2026
+                FEC only / House + Senate / 2026
               </div>
               <h1 className="max-w-2xl text-5xl font-semibold leading-[0.98] text-stone-950 md:text-7xl">
                 Spot the money signal before it becomes the story.
@@ -96,21 +109,21 @@ export default async function Home() {
 
             <div className="grid grid-cols-3 border border-stone-300 bg-white">
               <div className="border-r border-stone-200 p-4">
-                <div className="font-mono text-2xl font-semibold">9</div>
+                <div className="font-mono text-2xl font-semibold">{stats.races}</div>
                 <div className="mt-1 text-xs uppercase tracking-[0.14em] text-stone-500">
-                  IN races
+                  Races
                 </div>
               </div>
               <div className="border-r border-stone-200 p-4">
-                <div className="font-mono text-2xl font-semibold">FEC</div>
+                <div className="font-mono text-2xl font-semibold">{stats.candidates}</div>
                 <div className="mt-1 text-xs uppercase tracking-[0.14em] text-stone-500">
-                  Source
+                  Candidates
                 </div>
               </div>
               <div className="p-4">
-                <div className="font-mono text-2xl font-semibold">2026</div>
+                <div className="font-mono text-2xl font-semibold">{stats.signals}</div>
                 <div className="mt-1 text-xs uppercase tracking-[0.14em] text-stone-500">
-                  Cycle
+                  Signals
                 </div>
               </div>
             </div>
@@ -136,8 +149,10 @@ export default async function Home() {
       <section className="mx-auto grid max-w-7xl gap-6 px-5 py-8 lg:grid-cols-[1fr_0.72fr]">
         <div className="border border-stone-300 bg-white p-5" id="watchlist">
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-semibold">Indiana race context</h2>
-            <span className="font-mono text-xs text-stone-500">Manual + forecaster context</span>
+            <h2 className="text-xl font-semibold">Race context</h2>
+            <Link className="font-mono text-xs text-stone-600 underline underline-offset-4" href="/search">
+              Search candidates
+            </Link>
           </div>
           <div className="divide-y divide-stone-200">
             {raceContext.map((race) => (
@@ -158,6 +173,12 @@ export default async function Home() {
             <li>Candidate photos need source and license notes before reuse.</li>
             <li>Race ratings are context records, separate from FEC facts.</li>
           </ul>
+          <Link
+            className="mt-5 inline-block text-sm font-medium text-stone-800 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-800"
+            href="/methodology"
+          >
+            Read methodology
+          </Link>
         </aside>
       </section>
     </main>

@@ -14,7 +14,7 @@ Race Signals should help a reporter answer five questions:
 - What deserves a closer look?
 - What should I report before everyone else notices?
 
-The first version is intentionally narrow: FEC-only, U.S. House races in Indiana, 2026 cycle.
+The first working version started with Indiana House races, then expanded to a broader 2026 House and Senate ingestion path while keeping bounded local runs available.
 
 ## Current Repo State
 
@@ -57,7 +57,7 @@ Race Signals should store source IDs and source URLs for every public claim.
 
 Included in the first serious slice:
 
-- 2026 U.S. House candidates in Indiana
+- 2026 U.S. House and Senate candidates from the FEC API
 - Candidate profiles
 - Principal and linked committees
 - Committee profiles
@@ -94,7 +94,7 @@ Excluded from v1:
 - AI-generated scoring
 - Broad national coverage
 
-## Proposed Architecture
+## Architecture
 
 ```txt
 app/
@@ -102,7 +102,7 @@ app/
   candidates/[id]/page.tsx
   committees/[id]/page.tsx
   methodology/page.tsx
-  api/search/route.ts
+  search/page.tsx
 
 components/
   signal-card.tsx
@@ -116,24 +116,15 @@ lib/
     schema.sql
   sources/
     fec/
-      client.ts
-      adapter.ts
-      types.ts
-  normalize/
-    candidates.ts
-    committees.ts
-    filings.ts
-    transactions.ts
-  signals/
-    rules.ts
-    generate.ts
+      client.mjs
+      adapter.mjs
   demo/
-    seed.ts
+    feed.ts
 
 scripts/
-  ingest-fec.ts
-  generate-signals.ts
-  seed-demo.ts
+  ingest-fec.mjs
+  seed-demo.mjs
+  apply-schema.mjs
 ```
 
 ## Database Model
@@ -150,6 +141,10 @@ The initial Postgres model should include:
 - `filings`
 - `transactions`
 - `signals`
+- `candidate_totals`
+- `committee_totals`
+- `candidate_media`
+- `race_ratings`
 
 Use FEC IDs and endpoint-specific stable IDs as unique keys. Upserts are required.
 
@@ -190,8 +185,8 @@ Each signal should store:
 Planned local pipeline:
 
 ```bash
-pnpm ingest:fec
-pnpm signals:generate
+pnpm db:schema
+pnpm ingest:fec -- --scope indiana-house
 pnpm dev
 ```
 
@@ -201,8 +196,30 @@ The ingestion flow:
 2. Persist raw source metadata.
 3. Normalize candidates, committees, filings and transactions.
 4. Upsert records by stable source keys.
-5. Generate deterministic signals.
+5. Generate deterministic signals during ingestion.
 6. Render the feed and profile pages from Postgres.
+
+Useful ingestion scopes:
+
+```bash
+# Fast launch slice
+pnpm ingest:fec -- --scope indiana-house --candidate-limit 40 --detail-limit 12 --transaction-limit 75
+
+# One state, both chambers
+pnpm ingest:fec -- --scope congress --state IN --candidate-limit 120 --detail-limit 30 --transaction-limit 120
+
+# National bounded run
+pnpm ingest:fec -- --scope congress --candidate-limit 250 --detail-limit 40 --transaction-limit 150
+```
+
+Arguments:
+
+- `--cycle`: election cycle, default `2026`
+- `--scope`: `indiana-house`, `house`, `senate` or `congress`
+- `--state`: optional state filter for `house`, `senate` and `congress`
+- `--candidate-limit`: caps candidate search processing
+- `--detail-limit`: caps expensive per-candidate detail pulls
+- `--transaction-limit`: caps Schedule A, B and E rows per detail entity
 
 ## Data Freshness
 
@@ -233,9 +250,23 @@ DATABASE_URL=
 
 If `FEC_API_KEY` is missing, the app should use demo data instead of failing.
 
+Database setup:
+
+```bash
+pnpm db:schema
+pnpm db:seed
+```
+
+Quality checks:
+
+```bash
+pnpm lint
+pnpm build
+```
+
 ## Known Limitations
 
-- The first scope is Indiana House races only.
+- Broad national ingestion is intentionally bounded until queueing and scheduling are added.
 - Candidate and committee relationships can be messy and change over time.
 - Itemized contributor data does not represent every donor.
 - Contributor street addresses should not be displayed in the UI.
