@@ -1,0 +1,87 @@
+{
+  "lastReviewed": "2026-05-16",
+  "scopeNote": "Manual MVP scope only. This file does not claim competitiveness ratings.",
+  "races": [
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "01",
+      "label": "Indiana 1st District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    },
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "02",
+      "label": "Indiana 2nd District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    },
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "03",
+      "label": "Indiana 3rd District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    },
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "04",
+      "label": "Indiana 4th District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    },
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "05",
+      "label": "Indiana 5th District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    },
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "06",
+      "label": "Indiana 6th District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    },
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "07",
+      "label": "Indiana 7th District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    },
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "08",
+      "label": "Indiana 8th District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    },
+    {
+      "cycle": 2026,
+      "office": "H",
+      "state": "IN",
+      "district": "09",
+      "label": "Indiana 9th District",
+      "reason": "Included in Indiana House MVP scope.",
+      "source": "manual_scope"
+    }
+  ]
+}

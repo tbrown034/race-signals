@@ -1,0 +1,26 @@
+{
+  "demoOnly": true,
+  "note": "Synthetic records for offline UI and pipeline development. Do not present as real FEC data.",
+  "candidates": [
+    {
+      "fecCandidateId": "DEMO-IN05-A",
+      "name": "Demo Candidate A",
+      "party": "DEM",
+      "office": "H",
+      "state": "IN",
+      "district": "05",
+      "cycle": 2026,
+      "incumbentChallenge": "challenger"
+    },
+    {
+      "fecCandidateId": "DEMO-IN05-B",
+      "name": "Demo Candidate B",
+      "party": "REP",
+      "office": "H",
+      "state": "IN",
+      "district": "05",
+      "cycle": 2026,
+      "incumbentChallenge": "incumbent"
+    }
+  ]
+}

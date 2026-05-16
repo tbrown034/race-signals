@@ -1,0 +1,24 @@
+{
+  "demoOnly": true,
+  "note": "Synthetic records for offline UI and pipeline development. Do not present as real FEC data.",
+  "committees": [
+    {
+      "fecCommitteeId": "DEMO-CMT-001",
+      "name": "Demo Candidate A for Congress",
+      "committeeType": "H",
+      "designation": "P",
+      "state": "IN",
+      "linkedCandidateId": "DEMO-IN05-A",
+      "isPrincipal": true
+    },
+    {
+      "fecCommitteeId": "DEMO-CMT-002",
+      "name": "Demo Candidate B for Congress",
+      "committeeType": "H",
+      "designation": "P",
+      "state": "IN",
+      "linkedCandidateId": "DEMO-IN05-B",
+      "isPrincipal": true
+    }
+  ]
+}

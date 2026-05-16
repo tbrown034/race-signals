@@ -1,0 +1,93 @@
+{
+  "source": "fec",
+  "baseUrl": "https://api.open.fec.gov",
+  "lastReviewed": "2026-05-16",
+  "scope": {
+    "cycle": 2026,
+    "office": "H",
+    "state": "IN"
+  },
+  "endpoints": [
+    {
+      "key": "candidate_search",
+      "path": "/v1/candidates/search/",
+      "purpose": "Discover candidates in the scoped race universe.",
+      "initialParams": {
+        "cycle": 2026,
+        "office": "H",
+        "state": "IN",
+        "per_page": 100
+      }
+    },
+    {
+      "key": "candidate_detail",
+      "path": "/v1/candidate/{candidate_id}/",
+      "purpose": "Fetch a single candidate profile."
+    },
+    {
+      "key": "candidate_history_cycle",
+      "path": "/v1/candidate/{candidate_id}/history/{cycle}/",
+      "purpose": "Fetch cycle-specific candidate history."
+    },
+    {
+      "key": "candidate_totals",
+      "path": "/v1/candidate/{candidate_id}/totals/",
+      "purpose": "Fetch candidate financial totals."
+    },
+    {
+      "key": "candidate_committees",
+      "path": "/v1/candidate/{candidate_id}/committees/",
+      "purpose": "Fetch committees linked to a candidate."
+    },
+    {
+      "key": "candidate_filings",
+      "path": "/v1/candidate/{candidate_id}/filings/",
+      "purpose": "Fetch filings linked to a candidate."
+    },
+    {
+      "key": "committee_detail",
+      "path": "/v1/committee/{committee_id}/",
+      "purpose": "Fetch a single committee profile."
+    },
+    {
+      "key": "committee_history_cycle",
+      "path": "/v1/committee/{committee_id}/history/{cycle}/",
+      "purpose": "Fetch cycle-specific committee history."
+    },
+    {
+      "key": "committee_totals",
+      "path": "/v1/committee/{committee_id}/totals/",
+      "purpose": "Fetch committee financial totals."
+    },
+    {
+      "key": "committee_filings",
+      "path": "/v1/committee/{committee_id}/filings/",
+      "purpose": "Fetch filings linked to a committee."
+    },
+    {
+      "key": "filings",
+      "path": "/v1/filings/",
+      "purpose": "Fetch filing records across the scoped universe."
+    },
+    {
+      "key": "schedule_a",
+      "path": "/v1/schedules/schedule_a/",
+      "purpose": "Fetch itemized receipts."
+    },
+    {
+      "key": "schedule_b",
+      "path": "/v1/schedules/schedule_b/",
+      "purpose": "Fetch itemized disbursements."
+    },
+    {
+      "key": "schedule_e",
+      "path": "/v1/schedules/schedule_e/",
+      "purpose": "Fetch independent expenditures."
+    },
+    {
+      "key": "schedule_e_by_candidate",
+      "path": "/v1/schedules/schedule_e/by_candidate/",
+      "purpose": "Fetch independent expenditure aggregates by candidate."
+    }
+  ]
+}
