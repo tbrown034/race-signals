@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "devlog": "node scripts/devlog.mjs",
+    "devlog:install-hook": "node scripts/install-devlog-hook.mjs",
     "push:devlog": "node scripts/git-push-devlog.mjs"
   },
   "dependencies": {
